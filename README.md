@@ -3,7 +3,7 @@
 ## Install
 
 ```Shell
-% go get install github.com/juztin/solcoverbadge
+% go install github.com/juztin/solcoverbadge
 ```
 
 ## Use
