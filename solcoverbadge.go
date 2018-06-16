@@ -17,8 +17,8 @@ import (
 const SHIELD_FMT = "https://img.shields.io/badge/coverage-%s-%s.svg?longCache=true&style=flat-square"
 
 var (
-	coverage  = flag.String("coverage", "./coverage/index.html", "The path to the coverage index.html")
-	badgePath = flag.String("badge", "./coverage.svg", "The filepath for the coverage badge")
+	coverage  = flag.String("coverage", "/src/coverage/index.html", "The path to the coverage index.html")
+	badgePath = flag.String("badge", "/src/coverage/coverage.svg", "The filepath for the coverage badge")
 )
 
 func getStats(file string) (float64, error) {
