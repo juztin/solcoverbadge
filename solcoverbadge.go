@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -73,7 +74,8 @@ func main() {
 	url := fmt.Sprintf(SHIELD_FMT, value, color)
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 	defer resp.Body.Close()
 
@@ -82,6 +84,7 @@ func main() {
 	data, err := ioutil.ReadAll(resp.Body)
 	err = ioutil.WriteFile(*badgePath, data, 0644)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
