@@ -65,7 +65,10 @@ func main() {
 
 	// Get stats
 	log.Println("Reading coverage")
-	percent, _ := getStats(*coverage)
+	percent, err := getStats(*coverage)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	// Generate coverage badge
 	log.Println("Calling badge service")
