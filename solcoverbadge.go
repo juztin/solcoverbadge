@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,8 +18,9 @@ import (
 const SHIELD_FMT = "https://img.shields.io/badge/coverage-%s-%s.svg?longCache=true&style=flat-square"
 
 var (
-	coverage  = flag.String("coverage", "/src/coverage/index.html", "The path to the coverage index.html")
-	badgePath = flag.String("badge", "/src/coverage/coverage.svg", "The filepath for the coverage badge")
+	coverage    = flag.String("coverage", "/src/coverage/index.html", "The path to the coverage index.html")
+	badgePath   = flag.String("badge", "/src/coverage/coverage.svg", "The filepath for the coverage badge")
+	percentPath = flag.String("percent", "/src/coverage/coverage.txt", "The filepath for the coverage percent")
 )
 
 func getStats(file string) (float64, error) {
@@ -60,34 +62,54 @@ func coverageValue(percent float64) string {
 	return fmt.Sprintf("%.2f%%25", percent)
 }
 
+func getShield(percent float64) (*http.Response, error) {
+	color := coverageColor(percent)
+	value := coverageValue(percent)
+	url := fmt.Sprintf(SHIELD_FMT, value, color)
+	return http.Get(url)
+}
+
+func writePercentFile(percent float64, filePath string) error {
+	data := []byte(fmt.Sprintf("%.2f", percent))
+	return ioutil.WriteFile(filePath, data, 0644)
+}
+
+func writeBadge(data io.ReadCloser, filePath string) error {
+	b, err := ioutil.ReadAll(data)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filePath, b, 0644)
+}
+
+func checkErr(err error) {
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
 func main() {
 	flag.Parse()
 
 	// Get stats
 	log.Println("Reading coverage")
 	percent, err := getStats(*coverage)
-	if err != nil {
-		fmt.Println(err)
-	}
+	checkErr(err)
 
-	// Generate coverage badge
+	// Write percent
+	log.Println("Writing percent")
+	err = writePercentFile(percent, *percentPath)
+	checkErr(err)
+
+	// Get badge
 	log.Println("Calling badge service")
-	color := coverageColor(percent)
-	value := coverageValue(percent)
-	url := fmt.Sprintf(SHIELD_FMT, value, color)
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	defer resp.Body.Close()
+	r, err := getShield(percent)
+	checkErr(err)
+	defer r.Body.Close()
 
-	// Writing coverage badge
+	// Write badge
 	log.Println("Writing badge")
-	data, err := ioutil.ReadAll(resp.Body)
-	err = ioutil.WriteFile(*badgePath, data, 0644)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	err = writeBadge(r.Body, *badgePath)
+	checkErr(err)
 }
